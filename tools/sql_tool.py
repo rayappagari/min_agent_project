@@ -1,4 +1,21 @@
-def execute_sql(skill_name: str):
+"""SQL tool — maps a skill name to a mock SQL query and result.
+
+In production, this would build and execute a real SQL query against a
+database. Currently returns hardcoded queries and results for each skill.
+"""
+
+
+def execute_sql(skill_name: str) -> dict:
+    """Return the SQL query and result for the given skill.
+
+    Args:
+        skill_name: One of "cohort_analysis", "inventory_analysis",
+                    or "financial_reporting".
+
+    Returns:
+        {"sql": str, "result": str}. Falls back to placeholder strings
+        if skill_name is not recognised.
+    """
     mock_queries = {
         "cohort_analysis": """
 SELECT cohort_month,

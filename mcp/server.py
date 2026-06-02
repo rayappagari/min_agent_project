@@ -8,8 +8,29 @@ from hooks.logging_hook import (
 
 
 class MCPServer:
+    """Tool registry and execution engine for the MCP layer.
 
-    def execute_tool(self, tool_name, payload):
+    Dispatches tool calls by name, wraps each execution with before/after
+    lifecycle hooks, and raises ValueError for unregistered tool names.
+
+    To register a new tool: add an elif branch in execute_tool and implement
+    the function in tools/.
+    """
+
+    def execute_tool(self, tool_name: str, payload) -> dict:
+        """Dispatch a tool call, run lifecycle hooks, and return the result.
+
+        Args:
+            tool_name: Registered tool name ("execute_sql" or
+                       "search_documents").
+            payload: Forwarded directly to the tool function.
+
+        Returns:
+            Tool result.
+
+        Raises:
+            ValueError: If tool_name is not registered.
+        """
         before_tool(tool_name, payload)
 
         if tool_name == "execute_sql":
