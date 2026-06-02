@@ -7,6 +7,7 @@ skill = Skill(
         "inventory",
         "stock",
         "doh",
+        "days on hand",
         "stockout",
         "warehouse",
         "fill rate"
