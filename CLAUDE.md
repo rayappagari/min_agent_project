@@ -35,7 +35,9 @@ main.py
 
 **MCP layer** (`mcp/`) simulates a client/server boundary in-process. `MCPClient.call_tool` calls `MCPServer.execute_tool`, which dispatches to either `tools/sql_tool.py` or `tools/search_tool.py`. All tool implementations are currently mocked with hardcoded data.
 
-**Hooks** (`hooks/logging_hook.py`) provide `before_tool` / `after_tool` callbacks. Note: `after_tool` is currently dead code in `mcp/server.py` — it is called after a `return` or `raise` and never executes.
+**Human-in-the-loop gate** (`main.py`) — sits between `PlannerAgent` and `SupervisorAgent`. After the plan is printed, the user must type `yes` to execute, `no` to cancel, or `edit` to revise the query (which re-plans and re-asks). No agent or tool runs until the user approves. When editing, the loop reruns `planner.create_plan()` on the new query before asking again.
+
+**Hooks** (`hooks/logging_hook.py`) provide `before_tool` / `after_tool` callbacks.
 
 **SessionMemory** (`memory/session_memory.py`) stores the conversation history in-process (lost on restart). `last_metric_query()` scans history in reverse for the most recent user turn containing a metric keyword — used by the "compare with last month" feature.
 
