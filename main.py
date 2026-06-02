@@ -12,11 +12,28 @@ while True:
         print("Goodbye!")
         break
 
-    plan = planner.create_plan(query)
+    while True:
+        plan = planner.create_plan(query)
 
-    print("\nExecution Plan:")
-    for step in plan["plan"]:
-        print(f"- {step}")
+        print("\nExecution Plan:")
+        for step in plan["plan"]:
+            print(f"- {step}")
+
+        approval = input("\nProceed? (yes / no / edit): ").strip().lower()
+
+        if approval in ("yes", "y"):
+            break
+        elif approval in ("no", "n"):
+            print("Cancelled.")
+            query = None
+            break
+        elif approval == "edit":
+            query = input("Enter revised query: ").strip()
+        else:
+            print("Please enter yes, no, or edit.")
+
+    if not query:
+        continue
 
     response = supervisor.handle_request(query)
 

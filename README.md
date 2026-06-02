@@ -326,12 +326,30 @@ Each test case is a dict with `query` and `expected_skill`. Add new cases to the
 python main.py
 ```
 
+The system uses a **human-in-the-loop** control pattern. After the plan is shown, execution is paused and the user must explicitly approve before any agent or tool runs:
+
+```
+Proceed? (yes / no / edit):
+```
+
+- `yes` — execute the plan as-is
+- `no` — cancel; return to the prompt
+- `edit` — enter a revised query; the plan is regenerated and shown again before re-asking
+
 **Sample session:**
 ```
 Ask a question or type 'exit': show inventory turns
 
 Execution Plan:
 - Use SQLAgent to retrieve metric/result
+
+Proceed? (yes / no / edit): edit
+Enter revised query: show stockout risk by warehouse
+
+Execution Plan:
+- Use SQLAgent to retrieve metric/result
+
+Proceed? (yes / no / edit): yes
 
 Response:
 {'agent': 'sql_agent', 'sql': '\nSELECT warehouse_id,\n       inventory_turns,\n       stockout_risk\nFROM inventory_metrics;\n', 'result': 'Inventory Turns = 11.2'}
@@ -341,6 +359,6 @@ Ask a question or type 'exit': what is retention?
 Execution Plan:
 - Use RAGAgent to retrieve definition/context
 
-Response:
-{'agent': 'rag_agent', 'answer': 'Retention measures how many customers continue purchasing over time.'}
+Proceed? (yes / no / edit): no
+Cancelled.
 ```
