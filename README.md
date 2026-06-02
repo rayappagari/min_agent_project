@@ -13,6 +13,13 @@ User Input (natural language)
   PlannerAgent          ← generates a human-readable execution plan (display only)
         │
         ▼
+  ┌─ HITL Gate ─────────────────────────────────────────┐
+  │  Show plan → ask: yes / no / edit                   │
+  │  "edit" loops back to PlannerAgent with new query   │
+  │  "no" cancels; "yes" proceeds                       │
+  └─────────────────────────────────────────────────────┘
+        │ (yes)
+        ▼
   SupervisorAgent       ← central dispatcher; owns all routing logic
      │        │
      ▼        ▼
@@ -34,7 +41,8 @@ User Input (natural language)
 There are two parallel flows triggered for every user query:
 
 1. **Plan flow** (`PlannerAgent`) — generates a printed plan for transparency, but does not control execution.
-2. **Execution flow** (`SupervisorAgent` → agents → tools) — actually resolves the query.
+2. **HITL gate** — pauses between plan and execution; user must approve before any agent or tool runs.
+3. **Execution flow** (`SupervisorAgent` → agents → tools) — actually resolves the query.
 
 ---
 
@@ -320,21 +328,21 @@ Each test case is a dict with `query` and `expected_skill`. Add new cases to the
 
 ---
 
-## Running
+## Human-in-the-Loop Control (`main.py`)
 
-```bash
-python main.py
-```
+Every query passes through a HITL gate between planning and execution. No agent or tool runs until the user explicitly approves.
 
-The system uses a **human-in-the-loop** control pattern. After the plan is shown, execution is paused and the user must explicitly approve before any agent or tool runs:
+**Control options:**
 
-```
-Proceed? (yes / no / edit):
-```
+| Input | Behaviour |
+|---|---|
+| `yes` / `y` | Execute the plan as-is |
+| `no` / `n` | Cancel; return to the main prompt |
+| `edit` | Prompt for a revised query; regenerate and show the new plan; ask again |
 
-- `yes` — execute the plan as-is
-- `no` — cancel; return to the prompt
-- `edit` — enter a revised query; the plan is regenerated and shown again before re-asking
+The gate loops on invalid input until a valid choice is entered.
+
+**Why this matters:** The plan is generated before the gate, so the user can see exactly what will happen — which agent will run, which tool will be called — and intervene before any side effects occur. An `edit` cycle re-plans from scratch, so the shown plan always reflects the query that will actually execute.
 
 **Sample session:**
 ```
@@ -351,8 +359,13 @@ Execution Plan:
 
 Proceed? (yes / no / edit): yes
 
+[HOOK] Calling execute_sql
+[HOOK] Payload: inventory_analysis
+[HOOK] execute_sql completed
+[HOOK] Result: {'sql': '...', 'result': 'Inventory Turns = 11.2'}
+
 Response:
-{'agent': 'sql_agent', 'sql': '\nSELECT warehouse_id,\n       inventory_turns,\n       stockout_risk\nFROM inventory_metrics;\n', 'result': 'Inventory Turns = 11.2'}
+{'agent': 'sql_agent', 'sql': '...', 'result': 'Inventory Turns = 11.2'}
 
 Ask a question or type 'exit': what is retention?
 
@@ -361,4 +374,12 @@ Execution Plan:
 
 Proceed? (yes / no / edit): no
 Cancelled.
+```
+
+---
+
+## Running
+
+```bash
+python main.py
 ```
