@@ -2,6 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Setup
+
+Install dependencies:
+```
+pip install -r requirements.txt
+```
+
+Set your Anthropic API key (required — PlannerAgent and RouterAgent call Claude):
+```
+export ANTHROPIC_API_KEY=your-key-here   # Linux/macOS
+$env:ANTHROPIC_API_KEY = "your-key-here" # PowerShell
+```
+
 ## Commands
 
 Run the interactive assistant:
@@ -13,8 +26,6 @@ Run the routing eval suite:
 ```
 python -m evals.test_routing
 ```
-
-No build step, package manager, or external dependencies — pure Python stdlib.
 
 ## Architecture
 

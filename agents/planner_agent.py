@@ -1,17 +1,41 @@
+import os
+import anthropic
+
+_client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+
+_SYSTEM_PROMPT = """\
+You are a planning agent for a business analytics assistant.
+
+Given a user query, output a concise execution plan as a numbered list of steps.
+Each step must name the specific agent to use:
+- RAGAgent — for definitions and explanations ("what is X", "explain Y")
+- SQLAgent — for metric queries (show, calculate, compare, trend)
+
+Rules:
+- Output only the steps, one per line, no preamble or explanation.
+- If the query fits neither, output a single step: "Use SupervisorAgent to determine best route"
+
+Example:
+Query: "show revenue by region"
+Steps:
+1. Use SQLAgent to retrieve metric/result
+
+Example:
+Query: "what is churn?"
+Steps:
+1. Use RAGAgent to retrieve definition/context
+"""
+
+
 class PlannerAgent:
-    """Inspects a user query and produces a human-readable execution plan.
+    """Inspects a user query via Claude and produces a human-readable execution plan.
 
     The plan is displayed to the user before the HITL approval gate but is
     not passed to SupervisorAgent — planning and execution are independent.
     """
 
     def create_plan(self, query: str) -> dict:
-        """Return a plan dict describing which agent(s) should handle the query.
-
-        Matches against keyword patterns in order:
-        - "what is" / "explain" → RAGAgent step
-        - "show" / "calculate" / "compare" / "trend" → SQLAgent step
-        - No match → generic SupervisorAgent fallback step
+        """Call Claude to generate a plan for the given query.
 
         Args:
             query: Raw natural-language user input.
@@ -19,20 +43,27 @@ class PlannerAgent:
         Returns:
             {"query": str, "plan": [str, ...]}
         """
-        query_lower = query.lower()
+        response = _client.messages.create(
+            model="claude-opus-4-8",
+            max_tokens=256,
+            system=[
+                {
+                    "type": "text",
+                    "text": _SYSTEM_PROMPT,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ],
+            messages=[{"role": "user", "content": f"Query: {query}"}],
+        )
 
-        steps = []
-
-        if "what is" in query_lower or "explain" in query_lower:
-            steps.append("Use RAGAgent to retrieve definition/context")
-
-        if any(word in query_lower for word in ["show", "calculate", "compare", "trend"]):
-            steps.append("Use SQLAgent to retrieve metric/result")
-
-        if not steps:
-            steps.append("Use SupervisorAgent to determine best route")
+        text = response.content[0].text.strip()
+        steps = [
+            line.lstrip("0123456789.-) ").strip()
+            for line in text.splitlines()
+            if line.strip()
+        ]
 
         return {
             "query": query,
-            "plan": steps
+            "plan": steps,
         }
