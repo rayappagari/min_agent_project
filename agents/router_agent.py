@@ -1,5 +1,14 @@
 import os
+from pathlib import Path
 import anthropic
+
+# Load .env if present
+_env_path = Path(__file__).resolve().parents[1] / ".env"
+if _env_path.exists():
+    for _line in _env_path.read_text().splitlines():
+        if "=" in _line and not _line.startswith("#"):
+            _k, _v = _line.split("=", 1)
+            os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
 from skills.cohort_analysis import skill as cohort_skill
 from skills.inventory_analysis import skill as inventory_skill
 from skills.financial_reporting import skill as financial_skill

@@ -1,5 +1,14 @@
 import os
+from pathlib import Path
 import anthropic
+
+# Load .env if present
+_env_path = Path(__file__).resolve().parents[1] / ".env"
+if _env_path.exists():
+    for _line in _env_path.read_text().splitlines():
+        if "=" in _line and not _line.startswith("#"):
+            _k, _v = _line.split("=", 1)
+            os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
 
 _client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
